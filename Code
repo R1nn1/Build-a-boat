@@ -1,0 +1,117 @@
+local DrRayLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/AZYsGithub/DrRay-UI-Library/main/DrRay.lua"))()
+
+local window = DrRayLibrary:Load("Rinns Hub", "Default")
+
+local tab1 = DrRayLibrary.newTab("Main Tab", "ImageIdHere")
+local tab2 = DrRayLibrary.newTab("Extra Tab", "ImageIdHere")
+
+local TweenService = game:GetService("TweenService")
+local player = game.Players.LocalPlayer
+
+local autoFarmEnabled = false
+local commonChestEnabled = false
+local uncommonChestEnabled = false
+local rareChestEnabled = false
+local epicChestEnabled = false
+local legendaryChestEnabled = false
+
+-- Create a bigger invisible platform
+local platform = Instance.new("Part")
+platform.Size = Vector3.new(50, 1, 50) -- Bigger platform
+platform.Anchored = true
+platform.CanCollide = true
+platform.Transparency = 1
+platform.Parent = workspace
+
+local function stopAutoFarm()
+    autoFarmEnabled = false
+end
+
+local function startAutoFarm()
+    autoFarmEnabled = true
+    coroutine.wrap(function()
+        while autoFarmEnabled do
+            -- Ensure character and humanoidRootPart are valid
+            local character = player.Character or player.CharacterAdded:Wait()
+            local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+            local humanoid = character:WaitForChild("Humanoid")
+
+            local tweenInfoFast = TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
+            local tweenInfoMediumSlow = TweenInfo.new(20, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut) -- slower tween
+            local tweenInfoMediumFast = TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut) -- a bit slower for the third position
+
+            local targetPosition1 = Vector3.new(-50, 65, 900)
+            local targetPosition2 = Vector3.new(-55, 65, 8750)
+            local targetPosition3 = Vector3.new(-55, -360.3025207519531, 9488)
+
+            -- Move the platform to support the user
+            platform.CFrame = CFrame.new(targetPosition1.X, targetPosition1.Y - 3, targetPosition1.Z)
+
+            local tween1 = TweenService:Create(humanoidRootPart, tweenInfoFast, {CFrame = CFrame.new(targetPosition1)})
+            local tween2 = TweenService:Create(humanoidRootPart, tweenInfoMediumSlow, {CFrame = CFrame.new(targetPosition2)})
+            local tween3 = TweenService:Create(humanoidRootPart, tweenInfoMediumFast, {CFrame = CFrame.new(targetPosition3)})
+
+            tween1:Play()
+            tween1.Completed:Wait()
+            wait(1.5)
+
+            -- Move the platform to support the user
+            platform.CFrame = CFrame.new(targetPosition2.X, targetPosition2.Y - 3, targetPosition2.Z)
+
+            tween2:Play()
+            tween2.Completed:Wait()
+            wait(1.5)
+
+            -- Move the platform to support the user
+            platform.CFrame = CFrame.new(targetPosition3.X, targetPosition3.Y - 3, targetPosition3.Z)
+
+            tween3:Play()
+            tween3.Completed:Wait()
+            wait(14)
+
+            -- Restart the auto farm
+            repeat
+                wait()
+                character = player.Character
+            until character and character:FindFirstChild("HumanoidRootPart") and character:FindFirstChild("Humanoid")
+        end
+    end)()
+end
+
+tab1.newToggle("Auto Farm Gold", "Farms Gold for you 2k+ an hour might break sometimes", true, function(toggleState)
+    if toggleState then
+        print("On")
+        startAutoFarm()
+    else
+        print("Off")
+        stopAutoFarm()
+    end
+end)
+
+-- Function to create a toggle that runs specified code constantly
+local function createAutoChestToggle(tab, toggleName, chestName, enabledVariable)
+    tab.newToggle(toggleName, "Auto opens " .. chestName, true, function(toggleState)
+        if toggleState then
+            _G[enabledVariable] = true
+            coroutine.wrap(function()
+                while _G[enabledVariable] do
+                    local args = {
+                        [1] = chestName,
+                        [2] = 1
+                    }
+                    workspace:WaitForChild("ItemBoughtFromShop"):InvokeServer(unpack(args))
+                    wait(0.1) -- Small wait to prevent spamming too fast
+                end
+            end)()
+        else
+            _G[enabledVariable] = false
+        end
+    end)
+end
+
+-- Add toggles for opening chests to the new tab
+createAutoChestToggle(tab2, "Auto Open Common Chest", "Common Chest", "commonChestEnabled")
+createAutoChestToggle(tab2, "Auto Open Uncommon Chest", "Uncommon Chest", "uncommonChestEnabled")
+createAutoChestToggle(tab2, "Auto Open Rare Chest", "Rare Chest", "rareChestEnabled")
+createAutoChestToggle(tab2, "Auto Open Epic Chest", "Epic Chest", "epicChestEnabled")
+createAutoChestToggle(tab2, "Auto Open Legendary Chest", "Legendary Chest", "legendaryChestEnabled")
